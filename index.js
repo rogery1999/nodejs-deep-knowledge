@@ -1,31 +1,33 @@
+const { cpus, platform } = require("os");
+process.env.UV_THREADPOOL_SIZE = 1;
 const cluster = require("cluster");
-cluster.schedulingPolicy = cluster.SCHED_RR;
-const process = require("process");
-const { cpus } = require("os");
+//* Only windows
+if (platform() === "win32") {
+  cluster.schedulingPolicy = cluster.SCHED_RR;
+}
+const processMod = require("process");
 
 if (cluster.isMaster) {
   const cpusNum = cpus().length;
   console.log("cpus: ", cpusNum);
-  console.log(`Master Process ${process.pid} running`);
+  console.log(`Master Process ${processMod.pid} running`);
 
-  for (let index = 0; index < 4; index++) {
+  for (let index = 0; index < cpusNum / 2; index++) {
     cluster.fork();
   }
 } else {
+  const { pbkdf2 } = require("crypto");
   const express = require("express");
 
   const PORT = 3000;
   const app = express();
 
-  const doWork = (duration) => {
-    const start = Date.now();
-    while (Date.now() - start < duration) {}
-  };
-
   app.get("/", (req, res, next) => {
-    doWork(5000);
-    res.json({
-      message: "Home page",
+    pbkdf2("rogery", "salt", 100000, 512, "sha512", (err, derivedKey) => {
+      if (err) throw Error("Something went wrong");
+      res.json({
+        message: "Home page",
+      });
     });
   });
 
