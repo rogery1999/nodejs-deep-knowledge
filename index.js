@@ -1,4 +1,4 @@
-const { Worker } = require("worker_threads");
+const { fork } = require("child_process");
 const path = require("path");
 const express = require("express");
 
@@ -6,14 +6,14 @@ const PORT = 3000;
 const app = express();
 
 app.get("/", (req, res, next) => {
-  const workerFilePath = path.join(__dirname, "worker.js");
-  const worker = new Worker(workerFilePath);
+  const workerFilePath = path.join(__dirname, "child-process.js");
+  const childProcess = fork(workerFilePath);
 
-  worker.on("message", function ({ message, duration }) {
+  childProcess.on("message", ({ message, duration }) => {
     res.json({ message: `Worker finish its job in ${duration}` });
   });
 
-  worker.postMessage({ indication: "start" });
+  childProcess.send({ indication: "start" });
 });
 
 app.get("/fast", (req, res, next) => {
